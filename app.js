@@ -1,3 +1,4 @@
+// this function returns an array with the images of the cards
 const images = function(){
   return [
     'https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Playing_card_heart_A.svg/1200px-Playing_card_heart_A.svg.png',
@@ -54,23 +55,52 @@ const images = function(){
     'https://i.pinimg.com/originals/12/f7/a4/12f7a4211bbbbae45ffa90de88e20b40.png'
   ];
 };
+
+// the image of the back of the cards
 const backCard= 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQwYUJ7f4NECeCYf6-XrQAZfBLLyp5IeuQp5Q_FKPu8mYg5ArCX';
+
+// array of values of the coins to bet
 const coins = [1,2,5,10,20,50];
+
+// index to be applied on the coins array
 let coinIndex = 0;
+
+// initial amount of money
 let amount = 1000;
+
+// amount of money to place at one time
 let placed = 0;
+
+// boolean to decide if is possible to place a bet
 let betAvailable = true;
+
+// array with the initials of the seedds of the cards
+const seeds = ['h','d','s','c'];
+
+// array with the values of the cards, 14 stands for the ace
+const values = [14,2,3,4,5,6,7,8,9,10,11,12,13];
+
+// main boolean  of the game
+let switcher = true;
+
+// boolean that turns active after a bet is placed
+let gameOn = false;
+
+// main function after the content of the page is loaded
 document.addEventListener('DOMContentLoaded', function() {
-  const seeds = ['h','d','s','c'];
-  const values = [14,2,3,4,5,6,7,8,9,10,11,12,13];
+
+  // array of cards in the html file
   const cards = document.querySelectorAll('.card');
-  let switcher = true;
+
+  // function that assigns to each card the image of the back of the card
   const reverseCards = function(){
     cards.forEach(card =>{
       card.src = backCard;
     });
   };
   reverseCards();
+
+  // querySelectors for elements of the html that are going to be modified
   const play = document.querySelector('.play');
   const plus = document.querySelector('.plus');
   const bet = document.querySelector('.bett');
@@ -79,7 +109,9 @@ document.addEventListener('DOMContentLoaded', function() {
   const played = document.querySelector('.played');
   const points = document.querySelector('.points');
   const risk = document.querySelector('.risk');
-  let gameOn = false;
+  const result = document.querySelector('.result');
+
+  // array of cards for the .js file
   const cardsInPlay = [
     {position: cards[0], selected: false, active: false},
     {position: cards[1], selected: false, active: false},
@@ -88,6 +120,8 @@ document.addEventListener('DOMContentLoaded', function() {
     {position: cards[4], selected: false, active: false}
   ];
   let card;
+
+  // functions to establish if the player has scored a winning combination
   const checkForFlush = function(seeds){
     if(seeds[0] === seeds[1] && seeds[1] === seeds[2] && seeds[2] === seeds[3] && seeds[3] === seeds[4]){
       return 20;
@@ -141,20 +175,27 @@ document.addEventListener('DOMContentLoaded', function() {
     return false;
   };
 
+  // assign to the bet element a value from the array of coins
   bet.innerText=coins[coinIndex];
   stack.innerText= amount +'£';
+
+  // on click increments the value of the bet from the coins array
   plus.addEventListener('click', function(){
     if(betAvailable){
       coinIndex < coins.length - 1 ? coinIndex++ : coinIndex = 0;
       bet.innerText=coins[coinIndex];
     }
   });
+
+  // on click reduces the value of the bet from the coins array
   minus.addEventListener('click', function(){
     if(betAvailable){
       coinIndex < 1 ? coinIndex = coins.length - 1 : coinIndex--;
       bet.innerText=coins[coinIndex];
     }
   });
+
+  // on click increases the amount of the bet if the stack allows it
   bet.addEventListener('click', function(){
     if(betAvailable){
       if(amount >= parseInt(bet.innerText)){
@@ -165,24 +206,29 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   });
+
+  // on click the amount of the bet resets, being equal to 0
   played.addEventListener('click', function(){
     if(betAvailable){
       placed = 0;
       played.innerText = placed;
     }
   });
-
-
+  // makes possible to click on the cards so they can be swapped
   const activateCards = function(){
     cardsInPlay.forEach(card =>{
       card.active = true;
     });
   };
+
+  // is not possible to swap the cards
   const disActivateCards = function(){
     cardsInPlay.forEach(card =>{
       card.active = false;
     });
   };
+
+  // reset all the previous values and makes ready for another play
   const resetGame = function(){
     cardsInPlay.forEach(card =>{
       card.selected = false;
@@ -193,7 +239,10 @@ document.addEventListener('DOMContentLoaded', function() {
     betAvailable = true;
     points.innerText = '';
     risk.innerText = '';
+    result.innerText = '';
   };
+
+  // creates a new deck of cards, each card will have a seed, a value and a image
   const newDeck = function(){
     const deck = [];
     const figures = images();
@@ -209,19 +258,31 @@ document.addEventListener('DOMContentLoaded', function() {
         deck.push(card);
       }
     }
-    console.log(deck.length);
     return deck;
   };
+
   const game = function(){
+
+    // the win is equal to 0 at the beginning
     let win = 0;
+
+    // alpha is initialized at the number of total cards in the deck
     let alpha = 52;
+
+    // variable to store a random number
     let middle;
+
+    // generates a new deck
     const cardMobile = newDeck();
+
+    // generates a random number between 1 and alpha (1-52,1-51,1-50,1-49,1-48)
     const generateRandom = function(){
       const rnd = Math.floor(Math.random() * alpha);
       alpha--;
       return rnd;
     };
+
+    // assigns a random card from the deck to a specific card
     const assign = function(card){
       middle = generateRandom();
       card.position.src = cardMobile[middle].image;
@@ -229,11 +290,24 @@ document.addEventListener('DOMContentLoaded', function() {
       card.seed = cardMobile[middle].seed;
       cardMobile.splice(middle,1);
     };
+
+    // assigns a random card from the deck to each html card element
     const shuffle = function(){
       cardsInPlay.forEach(card => assign(card));
     };
+
+    /*
+      if the amount of money to bet exeeds the actual stack then is not possible to place the bet
+      when a bet is placed, the stack decreases of the amount of the bet placed
+      once the bet is placed, the player have the opportunity to swap up to 5 cardsArray
+      once clicked on a certain card, that card will be swaped with another random card from the deck
+      once decided which cards to swap, the computer will calculate if a winnin combination has been centered
+      if so the stack increments of the amount of money won
+    */
     if(!gameOn){
-      if(placed > 0){
+      if(placed > amount){
+        points.innerText = 'Not enough stack';
+      }else if(placed > 0){
         amount = amount - placed;
         stack.innerText = amount + '£';
         betAvailable = false;
@@ -267,21 +341,29 @@ document.addEventListener('DOMContentLoaded', function() {
       if(checkForFlush(seedsArray)){
         if(checkForStair(cardsArray)){
           win = parseInt(played.innerText) * 1000;
+          result.innerText = 'Royal Flush!!';
         } else {
           win = parseInt(played.innerText) * checkForFlush(seedsArray);
+          result.innerText = 'Flush!!';
         }
       } else if(checkForStair(cardsArray)){
         win = parseInt(played.innerText) * checkForStair(cardsArray);
+        result.innerText= 'Ladder!';
       } else if(checkForPoker(cardsArray)){
         win = parseInt(played.innerText) * checkForPoker(cardsArray);
+        result.innerText = 'Poker!!';
       } else if(checkForFull(cardsArray)){
         win = parseInt(played.innerText) * checkForFull(cardsArray);
+        result.innerText = 'Full House!!';
       } else if(checkForTris(cardsArray)){
         win = parseInt(played.innerText) * checkForTris(cardsArray);
+        result.innerText = 'Tris!!';
       } else if(checkForDouble(cardsArray)){
         win = parseInt(played.innerText) * checkForDouble(cardsArray);
+        result.innerText = 'Double Pair!';
       } else if(checkForPair(cardsArray)){
         win = parseInt(played.innerText) * checkForPair(cardsArray);
+        result.innerText = 'Pair!';
       } else win = 0;
       console.log(cardsArray);
       if(win === 0) {
@@ -290,7 +372,6 @@ document.addEventListener('DOMContentLoaded', function() {
         points.innerText = 'You won';
         risk.innerText = win + '£';
       }
-
       amount = amount + win;
       stack.innerText = amount + '£';
       win = 0;
@@ -298,13 +379,10 @@ document.addEventListener('DOMContentLoaded', function() {
       play.innerText = 'reset';
       switcher = !switcher;
     }
-
   };
 
+  // the main boolean of the game allows to start a new game or reset a just played game
   play.addEventListener('click', function(){
     switcher ? game() : resetGame();
   });
-
-
-
 });
